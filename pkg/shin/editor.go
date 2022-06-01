@@ -1,1 +1,1 @@
-package SHIN
+package shin

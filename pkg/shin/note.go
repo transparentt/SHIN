@@ -1,4 +1,4 @@
-package SHIN
+package shin
 
 type Note struct {
 	No       int
