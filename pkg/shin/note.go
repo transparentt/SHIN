@@ -31,7 +31,7 @@ func NewNote() Note {
 
 	}
 
-	return Note{No: int(highest) + 1, Contents: make([]string, 9999)}
+	return Note{No: int(highest) + 1, Contents: []string{}}
 }
 
 func (n *Note) Update(line string, row int) {
@@ -75,10 +75,10 @@ func ReadNo(no int) Note {
 	scanner := bufio.NewScanner(f)
 
 	idx := 0
-	contents := make([]string, 9999)
+	var contents []string
 	for scanner.Scan() {
 		// ここで一行ずつ処理
-		contents[idx] = scanner.Text()
+		contents = append(contents, scanner.Text())
 		idx += 1
 	}
 
