@@ -74,12 +74,10 @@ func ReadNo(no int) Note {
 
 	scanner := bufio.NewScanner(f)
 
-	idx := 0
 	var contents []string
 	for scanner.Scan() {
 		// ここで一行ずつ処理
 		contents = append(contents, scanner.Text())
-		idx += 1
 	}
 
 	return Note{No: no, Contents: contents}
