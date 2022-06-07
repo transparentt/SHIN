@@ -1,63 +1,109 @@
 package shin
 
+import (
+	"bufio"
+	"fmt"
+	"math"
+	"os"
+	"path/filepath"
+	"regexp"
+	"strconv"
+)
+
 type Note struct {
 	No       int
-	Contents [][]string
+	Contents []string
 }
 
-func (n Note) NewNote() Note {
-	var path string
-	var highest int
-	var contents [][]string
+func NewNote() Note {
 
-	if env.SHIN_STORAGE != "" {
-		path = env.SHIN_STORAGE
-	} else {
-		path = "~/.ssh/"
+	basePath := getBasePath()
+
+	paths, _ := filepath.Glob(basePath + "*.shin")
+
+	var highest float64 = 0
+	for _, path := range paths {
+		rep := regexp.MustCompile(`.shin$`)
+		filename := filepath.Base(rep.ReplaceAllString(path, ""))
+
+		number, _ := strconv.Atoi(filename)
+		highest = math.Max(highest, float64(number))
+
 	}
 
-	highest = n.getHighest(path) // If there is no note, return 0
-
-	return Note{highest + 1, contents}
+	return Note{No: int(highest) + 1, Contents: make([]string, 9999)}
 }
 
-func (n *Note) Read(no string) {
+func (n *Note) Update(line string, row int) {
+	n.Contents[row] = line
+}
 
-	n.No = n.getNumber(no)
-	n.Contents = n.getContents(no)
+func (n Note) Write() {
+
+	basePath := getBasePath()
+
+	number := strconv.Itoa(n.No)
+	f, err := os.Create(basePath + number + ".shin")
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	var textData string = ""
+	for _, row := range n.Contents {
+		textData += row
+	}
+
+	output := []byte(textData)
+	_, err = f.Write(output)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	defer f.Close()
+}
+
+func ReadNo(no int) Note {
+
+	basePath := getBasePath()
+
+	f, err := os.Open(basePath + strconv.Itoa(no) + ".shin")
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer f.Close()
+
+	scanner := bufio.NewScanner(f)
+
+	idx := 0
+	contents := make([]string, 9999)
+	for scanner.Scan() {
+		// ここで一行ずつ処理
+		contents[idx] = scanner.Text()
+		idx += 1
+	}
+
+	return Note{No: no, Contents: contents}
 
 }
 
-func (n *Note) Update(c Note.contents) {
-	n.Contents = c
-}
+func DeleteNo(no int) {
 
-func (n Note) Write() err {
-	if env.SHIN_STORAGE != nil {
-		_, err := write(n.Contents, env.SHIN_STORAGE+n.No+".shin")
-		return err
-	} else {
-		_, err := write(n.Contents, "~/.shin/"+n.No+".shin")
-		return err
+	basePath := getBasePath()
+
+	err := os.Remove(basePath + strconv.Itoa(no) + ".shin")
+	if err != nil {
+		fmt.Println(err)
 	}
 }
 
-func (n Note) Delete(no path) {
-	_, err := deleteNote(no)
-	return err
-}
+func getBasePath() string {
+	var basePath string
 
-func (n Note) getNumber(path string) int {
-	no := 3
-	return no
-}
+	if os.Getenv("SHIN_STORAGE") != "" {
+		basePath = os.Getenv("SHIN_STORAGE")
+	} else {
+		basePath = "~/.shin/"
+	}
 
-func (n Note) getContents(path string) [][]stringintconv {
-	var contents [][]string
-	return contents
-}
-
-func (n Note) getHighest(path string) int {
-	highest := 1
-	return highest
+	return basePath
 }

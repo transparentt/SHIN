@@ -1,10 +1,19 @@
 package main
 
-import "fmt"
-
-// import "github.com/gdamore/tcell/v2"
+import (
+	"github.com/transparentt/SHIN/pkg/shin"
+)
 
 func main() {
-	fmt.Println("main")
+
+	note := shin.NewNote()
+
+	for i := range note.Contents {
+		note.Update("aiueo\n", i)
+	}
+
+	note.Write()
+
+	// shin.DeleteNo(1)
 
 }
