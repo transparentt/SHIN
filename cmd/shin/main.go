@@ -5,7 +5,7 @@ import (
 )
 
 func main() {
-
+	/*
 	note := shin.NewNote()
 
 	for i := range note.Contents {
@@ -15,5 +15,7 @@ func main() {
 	note.Write()
 
 	// shin.DeleteNo(1)
+	*/
+	shin.Run()
 
 }

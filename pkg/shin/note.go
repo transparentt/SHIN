@@ -35,7 +35,12 @@ func NewNote() Note {
 }
 
 func (n *Note) Update(line string, row int) {
-	n.Contents[row] = line
+	if len(n.Contents) -1 < row{
+		n.Contents = append(n.Contents, line)
+	} else{
+		n.Contents[row] = line
+	}
+	
 }
 
 func (n Note) Write() {
@@ -50,7 +55,7 @@ func (n Note) Write() {
 
 	var textData string = ""
 	for _, row := range n.Contents {
-		textData += row
+		textData += row + "\n"
 	}
 
 	output := []byte(textData)
@@ -76,7 +81,6 @@ func ReadNo(no int) Note {
 
 	var contents []string
 	for scanner.Scan() {
-		// ここで一行ずつ処理
 		contents = append(contents, scanner.Text())
 	}
 
