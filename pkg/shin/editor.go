@@ -7,164 +7,166 @@ import (
 	"github.com/gdamore/tcell/v2"
 )
 
-type Editor struct{}
-
-func Run() {
-	defStyle := tcell.StyleDefault.Background(tcell.ColorReset).Foreground(tcell.ColorReset)
-	//cursorStyle := tcell.StyleDefault.Background(tcell.ColorGhostWhite).Foreground(tcell.ColorReset)
-
-	s, err := tcell.NewScreen()
-	if err != nil {
-		log.Fatalf("%+v", err)
-	}
-	if err := s.Init(); err != nil {
-		log.Fatalf("%+v", err)
-	}
-
-	s.SetStyle(defStyle)
-	s.Clear()
-
-	note := ReadNo(1)
-	/*for i, line := range note.Contents {
-		drawText(s, 0, i, 79, i, defStyle, line)
-	}*/
-
-	// Event loop
-	quit := func() {
-		s.Fini()
-		os.Exit(0)
-	}
-	var cursorX, cursorY int = 0, 0
-	for {
-		// Update screen
-		s.Clear()
-
-		for i, line := range note.Contents {
-			drawText(s, 0, i, 79, i, defStyle, line)
-		}
-
-		s.ShowCursor(cursorX, cursorY)
-
-		s.Show()
-
-		// Poll event
-		ev := s.PollEvent()
-
-		// Process event
-		switch ev := ev.(type) {
-		case *tcell.EventResize:
-			s.Sync()
-		case *tcell.EventKey:
-			if ev.Key() == tcell.KeyEscape {
-				quit()
-			}
-
-			if ev.Key() == tcell.KeyCtrlS {
-				note.Write()
-				quit()
-			}
-			if ev.Key() == tcell.KeyBackspace2 || ev.Key() == tcell.KeyBackspace {
-
-				if cursorX == 0 && cursorY == 0 {
-					continue
-				}
-
-				currentLine := note.Contents[cursorY]
-
-				if len(currentLine) != 0 {
-					if cursorX != 0 {
-
-						if cursorX-1 < 0 {
-							cursorX = 0
-						} else {
-							cursorX = cursorX - 1
-						}
-
-						newLine := currentLine[:cursorX] + currentLine[cursorX+1:]
-						note.Update(newLine, cursorY)
-
-					} else {
-
-						if cursorY-1 < 0 {
-							cursorY = 0
-						} else {
-							cursorY = cursorY - 1
-							cursorX = len(note.Contents[cursorY])
-						}
-
-						upperNewLine := note.Contents[cursorY] + currentLine
-						note.Update(upperNewLine, cursorY)
-
-						newContents := append(note.Contents[:cursorY+1], note.Contents[cursorY+1+1:]...)
-						note.Contents = newContents
-
-					}
-				} else {
-					if cursorX != 0 {
-						//
-					} else {
-
-						if cursorY-1 < 0 {
-							cursorY = 0
-						} else {
-							cursorY = cursorY - 1
-							cursorX = len(note.Contents[cursorY])
-						}
-
-						newContents := append(note.Contents[:cursorY+1], note.Contents[cursorY+1+1:]...)
-						note.Contents = newContents
-
-					}
-				}
-			}
-
-			if ev.Key() == tcell.KeyLeft {
-				if cursorX-1 < 0 {
-					cursorX = 0
-				} else {
-					cursorX = cursorX - 1
-				}
-			}
-
-			if ev.Key() == tcell.KeyRight {
-				if cursorX+1 >= len(note.Contents[cursorY]) {
-					cursorX = len(note.Contents[cursorY])
-				} else {
-					cursorX = cursorX + 1
-				}
-			}
-
-			if ev.Key() == tcell.KeyUp {
-				if cursorY-1 < 0 {
-					cursorY = 0
-				} else {
-					cursorY = cursorY - 1
-					if cursorX > len(note.Contents[cursorY]) {
-						cursorX = len(note.Contents[cursorY])
-					}
-				}
-			}
-
-			if ev.Key() == tcell.KeyDown {
-				if cursorY+1 >= len(note.Contents) {
-					cursorY = len(note.Contents) - 1
-				} else {
-					cursorY = cursorY + 1
-					if cursorX > len(note.Contents[cursorY]) {
-						cursorX = len(note.Contents[cursorY])
-					}
-				}
-			}
-
-		}
-	}
-
+type Editor struct {
+	note             Note
+	characterPerLine int
+	cursorX          int
+	cursorY          int
 }
 
-func drawText(s tcell.Screen, x1, y1, x2, y2 int, style tcell.Style, text string) {
+func NewEditor(note Note, characterPerLine int) Editor {
+	return Editor{
+		note:             note,
+		characterPerLine: characterPerLine,
+		cursorX:          0,
+		cursorY:          0,
+	}
+}
+
+func (e *Editor) keyUp() {
+	if e.cursorY-1 < 0 {
+		e.cursorY = 0
+	} else {
+		e.cursorY = e.cursorY - 1
+		if e.cursorX > len(e.note.Contents[e.cursorY]) {
+			e.cursorX = len(e.note.Contents[e.cursorY])
+		}
+	}
+}
+
+func (e *Editor) keyDown() {
+	if e.cursorY+1 >= len(e.note.Contents) {
+		e.cursorY = len(e.note.Contents) - 1
+	} else {
+		e.cursorY = e.cursorY + 1
+		if e.cursorX > len(e.note.Contents[e.cursorY]) {
+			e.cursorX = len(e.note.Contents[e.cursorY])
+		}
+	}
+}
+
+func (e *Editor) keyLeft() {
+	if e.cursorX-1 < 0 {
+		e.cursorX = 0
+	} else {
+		e.cursorX = e.cursorX - 1
+	}
+}
+
+func (e *Editor) keyRight() {
+	if e.cursorX+1 >= len(e.note.Contents[e.cursorY]) {
+		e.cursorX = len(e.note.Contents[e.cursorY])
+	} else {
+		e.cursorX = e.cursorX + 1
+	}
+}
+
+func (e *Editor) keyEnter() {
+
+	currentRightAll := e.note.Contents[e.cursorY][e.cursorX:]
+	currentLeftAll := e.note.Contents[e.cursorY][:e.cursorX]
+	e.note.UpdateLine(currentLeftAll, e.cursorY)
+
+	newContents := make([]string, len(e.note.Contents[:e.cursorY+1]))
+	copy(newContents, e.note.Contents[:e.cursorY+1])
+	newContents = append(newContents, currentRightAll)
+	newContents = append(newContents, e.note.Contents[e.cursorY+1:]...)
+	e.note.UpdateContents(newContents)
+
+	e.cursorY = e.cursorY + 1
+	e.cursorX = 0
+}
+
+func (e *Editor) keyBackspace() {
+	if e.cursorX == 0 && e.cursorY == 0 {
+		return
+	}
+
+	currentLine := e.note.Contents[e.cursorY]
+
+	if len(currentLine) != 0 {
+		if e.cursorX != 0 {
+
+			if e.cursorX-1 < 0 {
+				e.cursorX = 0
+			} else {
+				e.cursorX = e.cursorX - 1
+			}
+
+			newLine := currentLine[:e.cursorX] + currentLine[e.cursorX+1:]
+			e.note.UpdateLine(newLine, e.cursorY)
+
+		} else {
+
+			if e.cursorY-1 < 0 {
+				e.cursorY = 0
+			} else {
+				e.cursorY = e.cursorY - 1
+				e.cursorX = len(e.note.Contents[e.cursorY])
+			}
+
+			upperNewLine := e.note.Contents[e.cursorY] + currentLine
+			e.note.UpdateLine(upperNewLine, e.cursorY)
+
+			newContents := append(e.note.Contents[:e.cursorY+1], e.note.Contents[e.cursorY+1+1:]...)
+			e.note.UpdateContents(newContents)
+
+		}
+	} else {
+		if e.cursorX != 0 {
+			//
+		} else {
+
+			if e.cursorY-1 < 0 {
+				e.cursorY = 0
+			} else {
+				e.cursorY = e.cursorY - 1
+				e.cursorX = len(e.note.Contents[e.cursorY])
+			}
+
+			newContents := append(e.note.Contents[:e.cursorY+1], e.note.Contents[e.cursorY+1+1:]...)
+			e.note.UpdateContents(newContents)
+
+		}
+	}
+}
+
+func (e *Editor) keyDel() {
+	currentLine := e.note.Contents[e.cursorY]
+	if len(currentLine) > e.cursorX+1 {
+		newLine := currentLine[:e.cursorX+1] + currentLine[e.cursorX+2:]
+		e.note.UpdateLine(newLine, e.cursorY)
+	}
+}
+
+func (e *Editor) keyCtrlS(s tcell.Screen) {
+	e.note.Write()
+	s.Fini()
+	os.Exit(0)
+}
+
+func (e Editor) keyCtrlQ(s tcell.Screen) {
+	s.Fini()
+	os.Exit(0)
+}
+
+func (e *Editor) keyRune(event *tcell.EventKey) {
+	currentLine := e.note.Contents[e.cursorY]
+	newLine := currentLine[:e.cursorX] + string(rune(event.Rune())) + currentLine[e.cursorX:]
+	e.note.UpdateLine(newLine, e.cursorY)
+
+	// from Key right
+	if e.cursorX+1 >= len(e.note.Contents[e.cursorY]) {
+		e.cursorX = len(e.note.Contents[e.cursorY])
+	} else {
+		e.cursorX = e.cursorX + 1
+	}
+}
+
+func (e Editor) drawText(s tcell.Screen, x1, y1, x2, y2 int, style tcell.Style, text string) {
 	row := y1
 	col := x1
-	for _, r := range []rune(text) {
+	for _, r := range text {
 		s.SetContent(col, row, r, nil, style)
 		col++
 		if col >= x2 {
@@ -177,20 +179,63 @@ func drawText(s tcell.Screen, x1, y1, x2, y2 int, style tcell.Style, text string
 	}
 }
 
-func drawBox(s tcell.Screen, x1, y1, x2, y2 int, style tcell.Style, text string) {
-	if y2 < y1 {
-		y1, y2 = y2, y1
+func (e *Editor) Run() {
+	defStyle := tcell.StyleDefault.Background(tcell.ColorReset).Foreground(tcell.ColorReset)
+
+	s, err := tcell.NewScreen()
+	if err != nil {
+		log.Fatalf("%+v", err)
 	}
-	if x2 < x1 {
-		x1, x2 = x2, x1
+	if err := s.Init(); err != nil {
+		log.Fatalf("%+v", err)
 	}
 
-	// Fill background
-	for row := y1; row <= y2; row++ {
-		for col := x1; col <= x2; col++ {
-			s.SetContent(col, row, ' ', nil, style)
+	s.SetStyle(defStyle)
+	s.Clear()
+
+	// Event loop
+	for {
+		// Update screen
+		s.Clear()
+
+		for i, line := range e.note.Contents {
+			e.drawText(s, 0, i, e.characterPerLine, i, defStyle, line)
+		}
+
+		s.ShowCursor(e.cursorX, e.cursorY)
+		s.Show()
+
+		// Poll event
+		ev := s.PollEvent()
+
+		// Process event
+		switch ev := ev.(type) {
+		case *tcell.EventResize:
+			s.Sync()
+		case *tcell.EventKey:
+			if ev.Key() == tcell.KeyUp {
+				e.keyUp()
+			} else if ev.Key() == tcell.KeyDown {
+				e.keyDown()
+			} else if ev.Key() == tcell.KeyLeft {
+				e.keyLeft()
+			} else if ev.Key() == tcell.KeyRight {
+				e.keyRight()
+			} else if ev.Key() == tcell.KeyEnter {
+				e.keyEnter()
+			} else if ev.Key() == tcell.KeyBackspace || ev.Key() == tcell.KeyBackspace2 {
+				e.keyBackspace()
+			} else if ev.Key() == tcell.KeyDEL || ev.Key() == tcell.KeyCtrlD {
+				e.keyDel()
+			} else if ev.Key() == tcell.KeyCtrlS {
+				e.keyCtrlS(s)
+			} else if ev.Key() == tcell.KeyCtrlQ || ev.Key() == tcell.KeyEscape {
+				e.keyCtrlQ(s)
+			} else if ev.Key() == tcell.KeyRune {
+				e.keyRune(ev)
+			}
+
 		}
 	}
 
-	drawText(s, x1, y1, x2-3, y2-3, style, text)
 }

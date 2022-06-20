@@ -1,21 +1,12 @@
 package main
 
-import (
-	"github.com/transparentt/SHIN/pkg/shin"
-)
+import "github.com/transparentt/SHIN/pkg/shin"
 
 func main() {
-	/*
-	note := shin.NewNote()
 
-	for i := range note.Contents {
-		note.Update("aiueo\n", i)
-	}
+	note := shin.ReadNo(1)
+	editor := shin.NewEditor(note, 100)
 
-	note.Write()
-
-	// shin.DeleteNo(1)
-	*/
-	shin.Run()
+	editor.Run()
 
 }

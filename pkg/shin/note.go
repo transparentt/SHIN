@@ -34,12 +34,17 @@ func NewNote() Note {
 	return Note{No: int(highest) + 1, Contents: []string{}}
 }
 
-func (n *Note) Update(line string, row int) {
+func (n *Note) UpdateLine(line string, row int) {
 	if len(n.Contents) -1 < row{
 		n.Contents = append(n.Contents, line)
 	} else{
 		n.Contents[row] = line
 	}
+	
+}
+
+func (n *Note) UpdateContents(contents []string) {
+	n.Contents = contents
 	
 }
 
