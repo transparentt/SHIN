@@ -31,7 +31,7 @@ func NewNote() Note {
 
 	}
 
-	return Note{No: int(highest) + 1, Contents: []string{}}
+	return Note{No: int(highest) + 1, Contents: []string{""}}
 }
 
 func (n *Note) UpdateLine(line string, row int) {
