@@ -22,7 +22,7 @@ func main() {
 	}
 
 	arg.MustParse(&args)
-	//fmt.Println(args.read)
+
 
 	if args.NoteNumber != "" {
 		no, err := strconv.Atoi(args.NoteNumber)

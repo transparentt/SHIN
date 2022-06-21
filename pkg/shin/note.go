@@ -35,17 +35,17 @@ func NewNote() Note {
 }
 
 func (n *Note) UpdateLine(line string, row int) {
-	if len(n.Contents) -1 < row{
+	if len(n.Contents)-1 < row {
 		n.Contents = append(n.Contents, line)
-	} else{
+	} else {
 		n.Contents[row] = line
 	}
-	
+
 }
 
 func (n *Note) UpdateContents(contents []string) {
 	n.Contents = contents
-	
+
 }
 
 func (n Note) Write() {
@@ -92,7 +92,6 @@ func ReadNo(no int) Note {
 	return Note{No: no, Contents: contents}
 
 }
-
 
 func DeleteNo(no int) {
 

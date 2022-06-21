@@ -113,9 +113,7 @@ func (e *Editor) keyBackspace() {
 
 		}
 	} else {
-		if e.cursorX != 0 {
-			//
-		} else {
+		if e.cursorX == 0 {
 
 			if e.cursorY-1 < 0 {
 				e.cursorY = 0
@@ -155,7 +153,6 @@ func (e *Editor) keyRune(event *tcell.EventKey) {
 	newLine := currentLine[:e.cursorX] + string(rune(event.Rune())) + currentLine[e.cursorX:]
 	e.note.UpdateLine(newLine, e.cursorY)
 
-	// from Key right
 	if e.cursorX+1 >= len(e.note.Contents[e.cursorY]) {
 		e.cursorX = len(e.note.Contents[e.cursorY])
 	} else {
