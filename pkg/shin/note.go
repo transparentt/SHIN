@@ -19,7 +19,7 @@ func NewNote() Note {
 
 	basePath := GetBasePath()
 
-	paths, _ := filepath.Glob(basePath + "*.shin")
+	paths, _ := filepath.Glob(filepath.Join(basePath, "*.shin"))
 
 	var highest float64 = 0
 	for _, path := range paths {
@@ -53,7 +53,7 @@ func (n Note) Write() {
 	basePath := GetBasePath()
 
 	number := strconv.Itoa(n.No)
-	f, err := os.Create(basePath + number + ".shin")
+	f, err := os.Create(filepath.Join(basePath, number+".shin"))
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -76,7 +76,7 @@ func ReadNo(no int) Note {
 
 	basePath := GetBasePath()
 
-	f, err := os.Open(basePath + strconv.Itoa(no) + ".shin")
+	f, err := os.Open(filepath.Join(basePath, strconv.Itoa(no)+".shin"))
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -97,7 +97,7 @@ func DeleteNo(no int) {
 
 	basePath := GetBasePath()
 
-	err := os.Remove(basePath + strconv.Itoa(no) + ".shin")
+	err := os.Remove(filepath.Join(basePath, strconv.Itoa(no)+".shin"))
 	if err != nil {
 		fmt.Println(err)
 	}
