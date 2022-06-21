@@ -17,7 +17,7 @@ type Note struct {
 
 func NewNote() Note {
 
-	basePath := getBasePath()
+	basePath := GetBasePath()
 
 	paths, _ := filepath.Glob(basePath + "*.shin")
 
@@ -50,7 +50,7 @@ func (n *Note) UpdateContents(contents []string) {
 
 func (n Note) Write() {
 
-	basePath := getBasePath()
+	basePath := GetBasePath()
 
 	number := strconv.Itoa(n.No)
 	f, err := os.Create(basePath + number + ".shin")
@@ -74,7 +74,7 @@ func (n Note) Write() {
 
 func ReadNo(no int) Note {
 
-	basePath := getBasePath()
+	basePath := GetBasePath()
 
 	f, err := os.Open(basePath + strconv.Itoa(no) + ".shin")
 	if err != nil {
@@ -93,9 +93,10 @@ func ReadNo(no int) Note {
 
 }
 
+
 func DeleteNo(no int) {
 
-	basePath := getBasePath()
+	basePath := GetBasePath()
 
 	err := os.Remove(basePath + strconv.Itoa(no) + ".shin")
 	if err != nil {
@@ -103,7 +104,7 @@ func DeleteNo(no int) {
 	}
 }
 
-func getBasePath() string {
+func GetBasePath() string {
 	var basePath string
 
 	if os.Getenv("SHIN_STORAGE") != "" {
